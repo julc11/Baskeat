@@ -1,0 +1,2 @@
+# Baskeat
+Intelligent shopping recommender
