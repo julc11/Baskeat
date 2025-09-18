@@ -5,9 +5,8 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional
 
-# ---------------------------
 # Helpers
-# ---------------------------
+# --------
 def _parse_items_csv(s: str) -> List[str]:
     """Parse a comma-separated string into a clean list of lowercased items (keeps original case when needed)."""
     return [x.strip().strip(" '\"") for x in (s or "").split(",") if x.strip()]
@@ -27,10 +26,10 @@ def _parse_pinned_products(s: str) -> Dict[str, str]:
         if k and v:
             out[k] = v
     return out
+# --------
 
-# ---------------------------
 # Data models
-# ---------------------------
+# -----------
 @dataclass
 class Product:
     name: str
@@ -78,9 +77,10 @@ class User:
         if self.transport and not self.allowed_transports:
             self.allowed_transports = [self.transport]
 
-# ---------------------------
+# -----------
+
 # System parameters
-# ---------------------------
+# ---------
 SPEED_KMH = {'car': 50.0, 'bus': 30.0, 'walk': 5.0, 'delivery': 0.0}
 COST_PER_KM_CAR = 0.20
 BUS_FARE = 1.95
@@ -93,9 +93,10 @@ OVERHEAD_PER_STORE_MIN = 5.0 # fixed minutes per stop (enter, pay, etc.)
 DELIVERY_MIN_TOTAL = 15.0
 DELIVERY_MIN_ITEMS = 3
 
-# ---------------------------
+# ---------
+
 # Distances / times
-# ---------------------------
+# ------------
 def distance(a: Tuple[float,float], b: Tuple[float,float]) -> float:
     """Euclidean distance between two points."""
     return math.hypot(a[0]-b[0], a[1]-b[1])
@@ -165,9 +166,11 @@ def _time_and_cost_for_group(origin: Tuple[float,float],
 
     return round(time_min, 1), round(cost, 2), delivery_fee_per_store
 
-# ---------------------------
+# ----------
+
+
 # Build product plans
-# ---------------------------
+# -----------
 def _subsets_non_empty(stores: List['Supermarket']) -> List[List['Supermarket']]:
     """All non-empty subsets of stores."""
     return [list(c) for r in range(1, len(stores)+1) for c in itertools.combinations(stores, r)]
@@ -252,9 +255,10 @@ def _cost_and_quality(plan: Dict['Supermarket', List[str]]) -> Tuple[float, Dict
         total_cost += st
     return round(total_cost, 2), subtotals, float(total_quality), n_items
 
-# ---------------------------
+# --------------
+
 # Evaluations with flags & per-store delivery
-# ---------------------------
+# ------------------
 def _evaluate_global_transport(plan: Dict['Supermarket', List[str]],
                                user: User,
                                transport: str) -> Optional[Dict]:
@@ -355,9 +359,10 @@ def _evaluate_mixed_transport(plan: Dict['Supermarket', List[str]],
         })
     return results
 
-# ---------------------------
+# -------------
+
 # Ranking
-# ---------------------------
+# ------------------
 def _order_candidates(cands: List[Dict],
                       preference: str,
                       delta_eur: float = 1.0,
@@ -381,9 +386,10 @@ def _order_candidates(cands: List[Dict],
         r_qual = {id(ev): i+1 for i, ev in enumerate(by_qual)}
         return sorted(cands, key=lambda ev: (r_cost[id(ev)] + r_qual[id(ev)], ev["estimated_time_min"]))
 
-# ---------------------------
+# ----------
+
 # Explain unfeasibility
-# ---------------------------
+# ----------------
 def _unfeasibility_summary(candidates: List[Dict], user: User) -> List[str]:
     msgs = []
     if not candidates:
@@ -399,9 +405,10 @@ def _unfeasibility_summary(candidates: List[Dict], user: User) -> List[str]:
     msgs.append(f"Best alternative ignoring the time constraint: minimum possible cost €{min_cost:.2f}.")
     return msgs
 
-# ---------------------------
+# --------------
+
 # Core engine
-# ---------------------------
+# -----------------
 def recommend(user: User,
               supermarkets: List[Supermarket],
               shopping_list: List[str],
@@ -496,10 +503,11 @@ def recommend(user: User,
                     results[tr] = ranking[:min(top_k, len(ranking))]
                     results.setdefault('_warnings', []).extend(_unfeasibility_summary(all_candidates, user))
         return results
+#------
 
-# ---------------------------
 # Simulated data
-# ---------------------------
+#------
+
 PRODUCT_NAMES = [
     "Milk","Bread","Eggs","Apples","Bananas","Chicken","Beef","Pasta","Rice",
     "Tomatoes","Potatoes","Onions","Lettuce","Carrots","Yogurt","Cheese","Cereal","Tuna",
@@ -521,10 +529,11 @@ def create_supermarkets() -> List[Supermarket]:
     eroski = Supermarket("Eroski", (3.0, 0.0), True, 3.99, generate_catalog(20, 0.6, 9.0))
     alcampo = Supermarket("Alcampo", (0.0, 1.0), True, 5.49, generate_catalog(30, 0.8, 10.5))
     return [dia, eroski, alcampo]
+#----
 
-# ---------------------------
 # Pretty printing
-# ---------------------------
+
+#-------
 def _print_option(ev: Dict, idx: int, lambda_penalty: float):
     head = (
         f"{idx}) Stores: {', '.join(ev['stores'])} — "
@@ -540,7 +549,7 @@ def _print_option(ev: Dict, idx: int, lambda_penalty: float):
         mapping = ", ".join([f"{k}:{v}" for k, v in ev['transport_by_store'].items()])
         head += f" — Transports: {mapping}"
     if ev.get("violates_time"):
-        head += "  (⏰ exceeds your max time)"
+        head += "  ( exceeds your max time)"
     print(head)
 
     deliveries = ev.get("delivery_fee_per_store", {})
@@ -558,7 +567,7 @@ def print_results(results: Dict[str, List[Dict]], lambda_penalty: float):
     # Warnings
     warnings = results.get('_warnings', [])
     if warnings:
-        print("\n⚠ Warnings:")
+        print("\n Warnings:")
         for w in warnings:
             print(" -", w) 
 
@@ -569,13 +578,14 @@ def print_results(results: Dict[str, List[Dict]], lambda_penalty: float):
         print("\n===", title, "===")
         for i, ev in enumerate(ranking, 1):
             _print_option(ev, i, lambda_penalty)
+#--------
 
-# ---------------------------
 # CLI
-# ---------------------------
+#-----------
+
 def cli():
     supermarkets = create_supermarkets()
-    print("Welcome to the intelligent grocery planner 🛒")
+    print("Welcome to the intelligent grocery planner")
     print("Supermarkets:", ", ".join(s.name for s in supermarkets))
 
     loc = input("Your coordinates x,y on the map (0-3,0-3) [0,0]: ").strip() or "0,0"
@@ -638,10 +648,11 @@ def cli():
 
     results = recommend(user, supermarkets, shopping_list, delta_eur=delta_eur, top_k=7 if mixed_shopping else 3)
     print_results(results, lambda_penalty)
-
-# ---------------------------
+#--------
 # Demo
-# ---------------------------
+
+#-------
+
 def demo():
     supermarkets = create_supermarkets()
     user = User(
@@ -662,4 +673,4 @@ def demo():
     print_results(results, user.lambda_eur_per_min)
 
 if __name__ == "__main__":
-    cli()  # change to demo() if you want to see the automatic example
+    cli()  # change to demo() to see the automatic example
